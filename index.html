@@ -1,65 +1,182 @@
-<!DOCTYPE html>
-<html lang="nl">
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Japan 2025 Reisprogramma</title>
-<style>
-  body {
-    margin: 0;
-    background: #111;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    overflow: hidden;
-  }
-  #flipbook {
-    width: 90vw;
-    height: 90vh;
-  }
-  .page {
-    width: 100%;
-    height: 100%;
-    background: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-</style>
-</head>
-<body>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Japan 2025 — Flipbook</title>
 
-<div id="flipbook"></div>
+  <style>
+    /* Basic reset and layout */
+    html,body { height:100%; margin:0; font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#efefef; color:#111; }
+    .wrap { max-width:1200px; margin:24px auto; padding:12px; box-sizing:border-box; }
+    header { text-align:center; margin-bottom:12px; }
+    #controls { text-align:center; margin:12px 0; }
+    button, .info { font-size:16px; padding:8px 12px; margin:0 6px; cursor:pointer; }
+    button { background:#0a66c2; color:#fff; border:0; border-radius:6px; }
+    button:active { transform:translateY(1px); }
+    button[disabled] { opacity:.5; cursor:not-allowed; }
 
-<script src="jquery-3.7.1.min.js"></script>
-<script src="turn.min.js"></script>
-
-<script>
-  $(document).ready(function() {
-    // Dynamisch 17 pagina's toevoegen
-    for (let i = 1; i <= 17; i++) {
-      $("#flipbook").append(
-        `<div class='page'><img src='pages/page${i}.jpg' alt='Page ${i}'></div>`
-      );
+    /* Flipbook container */
+    #flipbook-container { display:flex; justify-content:center; }
+    #flipbook {
+      /* initial dimensions — will be resized/initialized by script */
+      width: 800px;
+      height: 600px;
+      margin: 0 auto;
+      box-shadow: 0 8px 22px rgba(0,0,0,.18);
+      background: white;
     }
 
-    // Start het flipbook
-    $("#flipbook").turn({
-      width: $("#flipbook").width(),
-      height: $("#flipbook").height(),
-      autoCenter: true,
-      elevation: 50,
-      gradients: true
-    });
-  });
-</script>
+    /* Each page */
+    .page {
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: white;
+    }
+    .page img {
+      max-width:100%;
+      max-height:100%;
+      display:block;
+      object-fit:contain;
+    }
 
+    /* Small screens */
+    @media (max-width:600px) {
+      #flipbook { width: 92vw; height: 72vw; }
+    }
+
+    /* Info/footer */
+    footer { text-align:center; margin-top:12px; color:#444; font-size:14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Japan 2025 — Flipbook</h1>
+      <div class="info">Use the buttons, arrow keys, or swipe to turn pages.</div>
+    </header>
+
+    <div id="controls">
+      <button id="prev" aria-label="Previous page">Previous</button>
+      <button id="next" aria-label="Next page">Next</button>
+      <span id="pager" class="info" aria-live="polite"></span>
+    </div>
+
+    <div id="flipbook-container">
+      <div id="flipbook"></div>
+    </div>
+
+    <footer>
+      Pages are loaded from the "pages" branch of this repository.
+    </footer>
+  </div>
+
+  <!-- Local JS files (you mentioned these exist in the main branch) -->
+  <script src="jquery-3.7.1.slim.min.js"></script>
+  <script src="turn.min.js"></script>
+
+  <script>
+    (function() {
+      // Configuration
+      const repoOwner = 'Marrah2010';
+      const repoName = 'Japan2025';
+      const pagesBranch = 'pages'; // images live on this branch
+      const totalPages = 17;       // you said there are 17 JPG files named page1.jpg ... page17.jpg
+
+      // Raw base URL to fetch images from the pages branch
+      const rawBase = `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${pagesBranch}/`;
+
+      const $flipbook = $('#flipbook');
+      const $pager = $('#pager');
+      const $prev = $('#prev');
+      const $next = $('#next');
+
+      // Build page elements and append to the flipbook container
+      for (let i = 1; i <= totalPages; i++) {
+        const imgUrl = rawBase + `page${i}.jpg`;
+        const $page = $('<div/>', { class: 'page' }).append(
+          $('<img/>', { src: imgUrl, alt: `Page ${i}` })
+        );
+        $flipbook.append($page);
+      }
+
+      // Wait for all images to load (or error) before initializing turn.js
+      const imgs = $flipbook.find('img').toArray();
+      const loadPromises = imgs.map(img => new Promise(resolve => {
+        if (img.complete) return resolve();
+        img.onload = img.onerror = resolve;
+      }));
+
+      Promise.all(loadPromises).then(() => {
+        // Compute a sensible width/height based on the first loaded image
+        const firstImg = imgs[0];
+        let w = Math.min(1000, Math.round(window.innerWidth * 0.85));
+        let h = Math.round(w * 0.75); // fallback aspect ratio
+
+        if (firstImg && firstImg.naturalWidth && firstImg.naturalHeight) {
+          const ratio = firstImg.naturalWidth / firstImg.naturalHeight;
+          h = Math.round(w / ratio);
+        }
+
+        // Initialize the flipbook
+        $flipbook.turn({
+          width: w,
+          height: h,
+          display: 'single',   // show one page at a time; change to 'double' if you want two-page spread
+          acceleration: true,
+          gradients: true,
+          autoCenter: true
+        });
+
+        // Update pager text and button state
+        function updatePager() {
+          const current = $flipbook.turn('page');
+          $pager.text(`Page ${current} of ${totalPages}`);
+          $prev.prop('disabled', current <= 1);
+          $next.prop('disabled', current >= $flipbook.turn('pages'));
+        }
+
+        // Bind controls
+        $prev.on('click', () => $flipbook.turn('previous'));
+        $next.on('click', () => $flipbook.turn('next'));
+
+        // Keyboard navigation
+        $(document).on('keydown', function(e) {
+          if (e.key === 'ArrowLeft') $flipbook.turn('previous');
+          if (e.key === 'ArrowRight') $flipbook.turn('next');
+        });
+
+        // When page changes update UI
+        $flipbook.bind('turned', function(e, page) {
+          updatePager();
+        });
+
+        // Update sizes on resize (keeps flipbook responsive)
+        let resizeTimer = null;
+        function resizeFlipbook() {
+          const containerWidth = Math.min(1000, Math.round(window.innerWidth * 0.85));
+          let newW = containerWidth;
+          let newH = Math.round(newW * (firstImg.naturalHeight ? (firstImg.naturalHeight / firstImg.naturalWidth) : 0.75));
+          $flipbook.turn('size', newW, newH);
+        }
+        $(window).on('resize', function() {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(resizeFlipbook, 120);
+        });
+
+        // Initial pager update
+        updatePager();
+      }).catch(err => {
+        console.warn('Error while loading images:', err);
+        $('#flipbook').text('Unable to load pages. Please make sure the "pages" branch contains the page JPGs.');
+      });
+
+      // If touch device, suggest swipe (turn.js supports swipe by default on many builds)
+    })();
+  </script>
 </body>
 </html>
-
