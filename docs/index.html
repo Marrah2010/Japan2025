@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Japan 2025 — Flipbook</title>
+
+  <style>
+    html,body { height:100%; margin:0; font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#efefef; color:#111; }
+    .wrap { max-width:1200px; margin:24px auto; padding:12px; box-sizing:border-box; }
+    header { text-align:center; margin-bottom:12px; }
+    #controls { text-align:center; margin:12px 0; }
+    button, .info { font-size:16px; padding:8px 12px; margin:0 6px; cursor:pointer; }
+    button { background:#0a66c2; color:#fff; border:0; border-radius:6px; }
+    button:active { transform:translateY(1px); }
+    button[disabled] { opacity:.5; cursor:not-allowed; }
+    #flipbook-container { display:flex; justify-content:center; }
+    #flipbook {
+      width: 800px;
+      height: 600px;
+      margin: 0 auto;
+      box-shadow: 0 8px 22px rgba(0,0,0,.18);
+      background: white;
+    }
+    .page {
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: white;
+    }
+    .page img {
+      max-width:100%;
+      max-height:100%;
+      display:block;
+      object-fit:contain;
+    }
+    @media (max-width:600px) {
+      #flipbook { width: 92vw; height: 72vw; }
+    }
+    footer { text-align:center; margin-top:12px; color:#444; font-size:14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Japan 2025 — Flipbook</h1>
+      <div class="info">Use the buttons, arrow keys, or swipe to turn pages.</div>
+    </header>
+
+    <div id="controls">
+      <button id="prev" aria-label="Previous page">Previous</button>
+      <button id="next" aria-label="Next page">Next</button>
+      <span id="pager" class="info" aria-live="polite"></span>
+    </div>
+
+    <div id="flipbook-container">
+      <div id="flipbook"></div>
+    </div>
+
+    <footer>
+      Pages are loaded from the "pages" branch of this repository.
+    </footer>
+  </div>
+
+  <!-- Make sure jquery-3.7.1.slim.min.js and turn.min.js are in the docs/ directory (or adjust paths) -->
+  <script src="jquery-3.7.1.slim.min.js"></script>
+  <script src="turn.min.js"></script>
+
+  <script>
+    (function() {
+      const repoOwner = 'Marrah2010';
+      const repoName = 'Japan2025';
+      const pagesBranch = 'pages'; // images live on this branch
+      const totalPages = 17;
+
+      // Raw base URL to fetch images from the pages branch
+      const rawBase = `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${pagesBranch}/`;
+
+      const $flipbook = $('#flipbook');
+      const $pager = $('#pager');
+      const $prev = $('#prev');
+      const $next = $('#next');
+
+      for (let i = 1; i <= totalPages; i++) {
+        const imgUrl = rawBase + `page${i}.jpg`;
+        const $page = $('<div/>', { class: 'page' }).append(
+          $('<img/>', { src: imgUrl, alt: `Page ${i}` })
+        );
+        $flipbook.append($page);
+      }
+
+      const imgs = $flipbook.find('img').toArray();
+      const loadPromises = imgs.map(img => new Promise(resolve => {
+        if (img.complete) return resolve();
+        img.onload = img.onerror = resolve;
+      }));
+
+      Promise.all(loadPromises).then(() => {
+        const firstImg = imgs[0];
+        let w = Math.min(1000, Math.round(window.innerWidth * 0.85));
+        let h = Math.round(w * 0.75);
+
+        if (firstImg && firstImg.naturalWidth && firstImg.naturalHeight) {
+          const ratio = firstImg.naturalWidth / firstImg.naturalHeight;
+          h = Math.round(w / ratio);
+        }
+
+        $flipbook.turn({
+          width: w,
+          height: h,
+          display: 'single',
+          acceleration: true,
+          gradients: true,
+          autoCenter: true
+        });
+
+        function updatePager() {
+          const current = $flipbook.turn('page');
+          $pager.text(`Page ${current} of ${totalPages}`);
+          $prev.prop('disabled', current <= 1);
+          $next.prop('disabled', current >= $flipbook.turn('pages'));
+        }
+
+        $prev.on('click', () => $flipbook.turn('previous'));
+        $next.on('click', () => $flipbook.turn('next'));
+
+        $(document).on('keydown', function(e) {
+          if (e.key === 'ArrowLeft') $flipbook.turn('previous');
+          if (e.key === 'ArrowRight') $flipbook.turn('next');
+        });
+
+        $flipbook.bind('turned', function(e, page) {
+          updatePager();
+        });
+
+        function resizeFlipbook() {
+          const containerWidth = Math.min(1000, Math.round(window.innerWidth * 0.85));
+          let newW = containerWidth;
+          let newH = Math.round(newW * (firstImg.naturalHeight ? (firstImg.naturalHeight / firstImg.naturalWidth) : 0.75));
+          $flipbook.turn('size', newW, newH);
+        }
+        $(window).on('resize', function() {
+          clearTimeout(window.__resizeTimer);
+          window.__resizeTimer = setTimeout(resizeFlipbook, 120);
+        });
+
+        updatePager();
+      }).catch(err => {
+        console.warn('Error while loading images:', err);
+        $('#flipbook').text('Unable to load pages. Please make sure the "pages" branch contains the page JPGs.');
+      });
+    })();
+  </script>
+</body>
+</html>
