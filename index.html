@@ -5,52 +5,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Japan 2025 Reisprogramma</title>
 <style>
-  body { 
-    margin: 0; 
-    background: #222; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    height: 100vh; 
+  body {
+    margin: 0;
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
     overflow: hidden;
   }
-  #flipbook { 
-    width: 90vw; 
-    height: 90vh; 
+  #flipbook {
+    width: 90vw;
+    height: 90vh;
   }
-  .page { 
-    width: 100%; 
-    height: 100%; 
-    background: white; 
-    display: flex; 
-    justify-content: center; 
+  .page {
+    width: 100%;
+    height: 100%;
+    background: white;
+    display: flex;
+    justify-content: center;
     align-items: center;
   }
-  img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: contain; 
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 </style>
-
-<!-- jQuery eerst -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<!-- dan Turn.js -->
-<script src="https://cdn.jsdelivr.net/gh/blasten/turn.js/turn.min.js"></script>
 </head>
-
 <body>
-<div id="flipbook">
-  <!-- 17 pagina's -->
-  <script>
-    for (let i = 1; i <= 17; i++) {
-      document.write(`<div class="page"><img src="pages/page${i}.jpg" alt="Page ${i}"></div>`);
-    }
-  </script>
-</div>
+
+<div id="flipbook"></div>
+
+<script src="jquery-3.7.1.min.js"></script>
+<script src="turn.min.js"></script>
 
 <script>
   $(document).ready(function() {
+    // Dynamisch 17 pagina's toevoegen
+    for (let i = 1; i <= 17; i++) {
+      $("#flipbook").append(
+        `<div class='page'><img src='pages/page${i}.jpg' alt='Page ${i}'></div>`
+      );
+    }
+
+    // Start het flipbook
     $("#flipbook").turn({
       width: $("#flipbook").width(),
       height: $("#flipbook").height(),
@@ -63,4 +62,3 @@
 
 </body>
 </html>
-
