@@ -33,37 +33,24 @@
   }
 </style>
 
-<!-- Turn.js library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js"></script>
-
-<!-- jQuery (required by Turn.js) -->
+<!-- jQuery eerst -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- dan Turn.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js"></script>
 </head>
 
 <body>
 <div id="flipbook">
   <!-- 17 pagina's -->
-  <div class="page"><img src="pages/page1.jpg" alt="Page 1"></div>
-  <div class="page"><img src="pages/page2.jpg" alt="Page 2"></div>
-  <div class="page"><img src="pages/page3.jpg" alt="Page 3"></div>
-  <div class="page"><img src="pages/page4.jpg" alt="Page 4"></div>
-  <div class="page"><img src="pages/page5.jpg" alt="Page 5"></div>
-  <div class="page"><img src="pages/page6.jpg" alt="Page 6"></div>
-  <div class="page"><img src="pages/page7.jpg" alt="Page 7"></div>
-  <div class="page"><img src="pages/page8.jpg" alt="Page 8"></div>
-  <div class="page"><img src="pages/page9.jpg" alt="Page 9"></div>
-  <div class="page"><img src="pages/page10.jpg" alt="Page 10"></div>
-  <div class="page"><img src="pages/page11.jpg" alt="Page 11"></div>
-  <div class="page"><img src="pages/page12.jpg" alt="Page 12"></div>
-  <div class="page"><img src="pages/page13.jpg" alt="Page 13"></div>
-  <div class="page"><img src="pages/page14.jpg" alt="Page 14"></div>
-  <div class="page"><img src="pages/page15.jpg" alt="Page 15"></div>
-  <div class="page"><img src="pages/page16.jpg" alt="Page 16"></div>
-  <div class="page"><img src="pages/page17.jpg" alt="Page 17"></div>
+  <script>
+    for (let i = 1; i <= 17; i++) {
+      document.write(`<div class="page"><img src="pages/page${i}.jpg" alt="Page ${i}"></div>`);
+    }
+  </script>
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
+  $(document).ready(function() {
     $("#flipbook").turn({
       width: $("#flipbook").width(),
       height: $("#flipbook").height(),
