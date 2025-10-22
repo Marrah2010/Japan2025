@@ -65,12 +65,13 @@
     </footer>
   </div>
 
-  <!-- Make sure jquery-3.7.1.slim.min.js and turn.min.js are in the docs/ directory (or adjust paths) -->
-  <script src="jquery-3.7.1.slim.min.js"></script>
-  <script src="turn.min.js"></script>
+  <!-- Load jQuery and turn.js from public CDNs so the site can load them under Pages -->
+  <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js"></script>
 
   <script>
     (function() {
+      // Configuration
       const repoOwner = 'Marrah2010';
       const repoName = 'Japan2025';
       const pagesBranch = 'pages'; // images live on this branch
@@ -84,6 +85,7 @@
       const $prev = $('#prev');
       const $next = $('#next');
 
+      // Build page elements and append to the flipbook container
       for (let i = 1; i <= totalPages; i++) {
         const imgUrl = rawBase + `page${i}.jpg`;
         const $page = $('<div/>', { class: 'page' }).append(
@@ -92,6 +94,7 @@
         $flipbook.append($page);
       }
 
+      // Wait for all images to load (or error) before initializing turn.js
       const imgs = $flipbook.find('img').toArray();
       const loadPromises = imgs.map(img => new Promise(resolve => {
         if (img.complete) return resolve();
@@ -99,24 +102,27 @@
       }));
 
       Promise.all(loadPromises).then(() => {
+        // Compute a sensible width/height based on the first loaded image
         const firstImg = imgs[0];
         let w = Math.min(1000, Math.round(window.innerWidth * 0.85));
-        let h = Math.round(w * 0.75);
+        let h = Math.round(w * 0.75); // fallback aspect ratio
 
         if (firstImg && firstImg.naturalWidth && firstImg.naturalHeight) {
           const ratio = firstImg.naturalWidth / firstImg.naturalHeight;
           h = Math.round(w / ratio);
         }
 
+        // Initialize the flipbook
         $flipbook.turn({
           width: w,
           height: h,
-          display: 'single',
+          display: 'single',   // show one page at a time; change to 'double' if you want two-page spread
           acceleration: true,
           gradients: true,
           autoCenter: true
         });
 
+        // Update pager text and button state
         function updatePager() {
           const current = $flipbook.turn('page');
           $pager.text(`Page ${current} of ${totalPages}`);
@@ -124,18 +130,22 @@
           $next.prop('disabled', current >= $flipbook.turn('pages'));
         }
 
+        // Bind controls
         $prev.on('click', () => $flipbook.turn('previous'));
         $next.on('click', () => $flipbook.turn('next'));
 
+        // Keyboard navigation
         $(document).on('keydown', function(e) {
           if (e.key === 'ArrowLeft') $flipbook.turn('previous');
           if (e.key === 'ArrowRight') $flipbook.turn('next');
         });
 
+        // When page changes update UI
         $flipbook.bind('turned', function(e, page) {
           updatePager();
         });
 
+        // Update sizes on resize (keeps flipbook responsive)
         function resizeFlipbook() {
           const containerWidth = Math.min(1000, Math.round(window.innerWidth * 0.85));
           let newW = containerWidth;
@@ -147,10 +157,11 @@
           window.__resizeTimer = setTimeout(resizeFlipbook, 120);
         });
 
+        // Initial pager update
         updatePager();
       }).catch(err => {
         console.warn('Error while loading images:', err);
-        $('#flipbook').text('Unable to load pages. Please make sure the "pages" branch contains the page JPGs.');
+        $('#flipbook').text('Unable to load pages. Please make sure the \"pages\" branch contains the page JPGs.');
       });
     })();
   </script>
